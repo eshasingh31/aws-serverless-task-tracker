@@ -1,1 +1,119 @@
-<!-- Frontend file -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Task Tracker</title>
+</head>
+
+<body>
+
+    <h1>Task Tracker</h1>
+
+    <button onclick="login()">Login</button>
+
+    <br><br>
+
+    <input type="text" id="taskInput" placeholder="Enter task">
+
+    <button onclick="addTask()">Add Task</button>
+
+    <h2>Tasks</h2>
+
+    <ul id="taskList"></ul>
+
+    <script>
+
+        // API URL
+        const API_URL = "https://2uxqe3xnyd.execute-api.eu-north-1.amazonaws.com/dev/tasks";
+
+        // COGNITO CLIENT ID
+        const CLIENT_ID = "13httd93q3k44u9pi07kimebut";
+
+        // COGNITO DOMAIN
+        const DOMAIN = "eu-north-1n71axhhwa.auth.eu-north-1.amazoncognito.com";
+
+        // LOGIN
+        function login() {
+
+            window.location.href =
+                `https://${DOMAIN}/login?client_id=${CLIENT_ID}&response_type=token&scope=email+openid&redirect_uri=https://esha-task-tracker-frontend.s3.eu-north-1.amazonaws.com/index.html`;
+        }
+
+        // GET TOKEN
+        function getToken() {
+
+            const hash = window.location.hash;
+
+            if (hash.includes("access_token")) {
+
+                const token = hash.split("access_token=")[1].split("&")[0];
+
+                localStorage.setItem("token", token);
+
+                return token;
+            }
+
+            return localStorage.getItem("token");
+        }
+
+        // ADD TASK
+        async function addTask() {
+
+            const task = document.getElementById("taskInput").value;
+
+            const token = getToken();
+
+            await fetch(API_URL, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": token
+                },
+
+                body: JSON.stringify({
+                    task: task
+                })
+            });
+
+            loadTasks();
+        }
+
+        // LOAD TASKS
+        async function loadTasks() {
+
+            const token = getToken();
+
+            const response = await fetch(API_URL, {
+
+                method: "GET",
+
+                headers: {
+                    "Authorization": token
+                }
+            });
+
+            const tasks = await response.json();
+
+            const taskList = document.getElementById("taskList");
+
+            taskList.innerHTML = "";
+
+            tasks.forEach(task => {
+
+                const li = document.createElement("li");
+
+                li.innerText = task.task;
+
+                taskList.appendChild(li);
+            });
+        }
+
+        loadTasks();
+
+    </script>
+
+</body>
+
+</html>
